@@ -1,0 +1,34 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: clang++.exe build active file",
+            "command": "C:\\LLVM\\bin\\clang++.exe",
+            "args": [
+                "${workspaceFolder}/src/src/*.cpp",
+                "-I${workspaceFolder}/src/src",
+                "-I${workspaceFolder}/src/Include/GLAD/headers/",
+                "-I${workspaceFolder}/src/Include/GLFW/include/",
+                "-I${workspaceFolder}/src/Include/GLM",
+                "-I${workspaceFolder}/src/Include/ASSIMP/include",
+                "-L${workspaceFolder}/src/Include/GLFW/lib/",
+                "-lglfw3dll.lib",
+                "-L${workspaceFolder}/src/Include/ASSIMP/",
+                "-lassimp.lib",
+                "-g", // Adds Debug Info
+                "-o${workspaceFolder}/src/Run3D.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        }
+    ],
+    "version": "2.0.0"
+}

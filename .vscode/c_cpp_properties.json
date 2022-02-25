@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/src/Include/GLAD/headers",
+                "${workspaceFolder}/src/Include/GLFW/include",
+                "${workspaceFolder}/src/Include/GLM"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.19041.0",
+            "compilerPath": "C:/LLVM/bin/clang++.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-clang-x64"
+        }
+    ],
+    "version": 4
+}
