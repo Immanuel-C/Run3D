@@ -6,6 +6,7 @@ layout(location = 2) in vec2 aTexCoords;
 
 out vec3 fragColor;
 out vec2 texCoords;
+out vec3 cubeTexCoords;
 
 uniform mat4 uTransform;
 uniform mat4 uProjection;
@@ -15,4 +16,5 @@ void main() {
 	gl_Position = uProjection * uView * uTransform * vec4(aPos, 1.0);
 	fragColor = aColor;
 	texCoords = aTexCoords;
+	cubeTexCoords = aPos;
 }

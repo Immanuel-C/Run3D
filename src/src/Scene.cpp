@@ -8,9 +8,8 @@ void Scene::draw()
 {
 	Mesh3D::getVAO().bind();
 	for (Mesh3D* mesh : m_meshes) {
-
-		// if the mesh is a sky box 
 		if (mesh->isSkyBox()) {
+			glDepthMask(GL_FALSE);
 			glDisable(GL_CULL_FACE);
 			mesh->getShader().bind();
 			mesh->getVBO().bind();
@@ -38,6 +37,7 @@ void Scene::draw()
 			glEnable(GL_CULL_FACE);
 			glCullFace(GL_BACK);
 			glFrontFace(GL_CCW);
+			glDepthMask(GL_TRUE);
 		}
 		else {
 

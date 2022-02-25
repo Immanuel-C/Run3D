@@ -2,6 +2,8 @@
 #include <glad/glad.h>
 
 #include <string>
+#include <array>
+#include <vector>
 #include <iostream>
 
 #define R3D_USE 1
@@ -39,5 +41,23 @@ public:
 
     inline void bind() override { glBindTexture(GL_TEXTURE_2D, m_ID); }
     inline void unbind() override { glBindTexture(GL_TEXTURE_2D, 0); }
-private:
+};
+
+class CubeMap : public ITexture {
+public:
+    CubeMap(std::string* filePaths, size_t lenOfFilePaths, TextureEffects effects);
+
+    template <size_t _size>
+    CubeMap(std::array<std::string, _size> filePaths, TextureEffects effects) {
+        CubeMap(filePaths.data(), filePaths.size(), effects);
+    }
+
+    CubeMap(std::vector<std::string> filePaths, TextureEffects effects) {
+        CubeMap(filePaths.data(), filePaths.size(), effects);
+    }
+
+    CubeMap() {}
+
+    inline void bind() override { glBindTexture(GL_TEXTURE_CUBE_MAP, m_ID); }
+    inline void unbind() override { glBindTexture(GL_TEXTURE_CUBE_MAP, 0); }
 };

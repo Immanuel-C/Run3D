@@ -18,9 +18,7 @@
 #include "Camera.h"
 #include "R3DTime.h"
 #include "Texture.h"
-
-#include <algorithm>
-#include <random>
+#include "Sound.h"
 
 
 int main()
@@ -36,6 +34,7 @@ int main()
     
     Shader shader{ "Assets/Shaders/BasicShader.vert", "Assets/Shaders/BasicShader.frag" };
     Shader basicTextureShader{ "Assets/Shaders/BasicShader.vert", "Assets/Shaders/BasicTextureShader.frag" };
+    Shader skyBoxShader{ "Assets/Shaders/BasicShader.vert", "Assets/Shaders/SkyBoxShader.frag" };
 
     TextureEffects textureEffects;
 
@@ -43,6 +42,23 @@ int main()
     textureEffects.wrapping.repeat = R3D_USE;
 
     Texture basicTexture{"Assets/Textures/wall.jpg", textureEffects};
+
+    std::array<std::string, 6> faces = 
+    {
+        "Assets/Textures/SkyBoxes/RedSpace/right.png",
+        "Assets/Textures/SkyBoxes/RedSpace/left.png",
+        "Assets/Textures/SkyBoxes/RedSpace/top.png",
+        "Assets/Textures/SkyBoxes/RedSpace/bottom.png",
+        "Assets/Textures/SkyBoxes/RedSpace/front.png",
+        "Assets/Textures/SkyBoxes/RedSpace/back.png"
+    };
+
+    TextureEffects skyBoxEffects;
+
+    skyBoxEffects.wrapping.clampToEdge = R3D_USE;
+    skyBoxEffects.filtering.bilinear = R3D_USE;
+
+    CubeMap cubeMap{faces, skyBoxEffects};
 
     std::array<float, 64> vertices = {
         // front
@@ -78,7 +94,7 @@ int main()
         6, 7, 3
     };
 
-    Camera3D camera{90.0f, (float)window->getWidth() / (float)window->getHeight(), 0.1f, 1000.0f};
+    Camera3D camera{90.0f, (float)window->getWidth() / (float)window->getHeight(), 0.1f, 100000.0f};
     camera.setPosition({ 0.0f, 0.0f, -3.0f });
 
     Scene scene{ camera };
@@ -88,7 +104,7 @@ int main()
     Mesh3D texturedMesh{ vertices, indices, {}, {1.0f, 1.0f, 1.0f}, 0.0f, {}, basicTextureShader, basicTexture };
     //Mesh3D mesh2{ "Assets/Models/EMP_Handgun.fbx", {}, {10.0f, 10.0f, 10.0f,}, 0.0f, {}, shader };
 
-    Mesh3D skybox{ vertices, indices, {}, {100.0f, 100.0f, 100.0f}, 0.0f, {}, shader, {}, true };
+    Mesh3D skybox{ vertices, indices, {}, {50000.0f, 50000.0f, 50000.0f}, 0.0f, {}, skyBoxShader, cubeMap, true };
 
     scene.addMesh(mesh0);
     scene.addMesh(mesh1);
@@ -110,7 +126,10 @@ int main()
     float yaw = 90.0f;
     float pitch = 0.0f;
 
-    bool isCursorHidden = true;
+    bool isCursorHidden = false;
+
+    Sound sound{"Assets/Audio/getout.ogg"};
+    sound.play(false);
 
     while (!window->shouldClose()) {
         window->clear();

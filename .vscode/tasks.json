@@ -11,10 +11,13 @@
                 "-I${workspaceFolder}/src/Include/GLFW/include/",
                 "-I${workspaceFolder}/src/Include/GLM",
                 "-I${workspaceFolder}/src/Include/ASSIMP/include",
+                "-I${workspaceFolder}/src/Include/OPENAL/include",
                 "-L${workspaceFolder}/src/Include/GLFW/lib/",
                 "-lglfw3dll.lib",
                 "-L${workspaceFolder}/src/Include/ASSIMP/",
                 "-lassimp.lib",
+                "-L${workspaceFolder}/src/Include/OPENAL/lib",
+                "-lOpenAL32.lib",
                 "-g", // Adds Debug Info
                 "-o${workspaceFolder}/src/Run3D.exe"
             ],
