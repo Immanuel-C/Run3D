@@ -1,8 +1,9 @@
 #include "Sound.h"
 
-
 ALCcontext* Sound::m_audioContext = nullptr;
 ALCdevice* Sound::m_audioDevice = nullptr;
+
+std::unordered_map<std::string, SoundData> Sound::m_cachedSounds;
 
 void checkError() {
     int err = alGetError();
@@ -17,6 +18,7 @@ Sound::Sound(const std::string& filePath) {
         checkError();
     }
 
+    // If no audio device is avalible print error
     if (m_audioDevice == nullptr) {
         std::cerr << "No sutiable audio devices or platform is unsupported!";
     }
@@ -29,6 +31,7 @@ Sound::Sound(const std::string& filePath) {
             return;
         }
     }
+
 
     alGenSources(1, &m_sourceID);
     checkError();
@@ -46,28 +49,45 @@ Sound::Sound(const std::string& filePath) {
     alGenBuffers(1, &m_bufferID);
     checkError();
 
-    short* audioBuffer = nullptr;
-    int audioFormat = 0, audioBufferSize = 0, audioSampleRate = 0, audioChannels = 0;
 
-    audioBufferSize = stb_vorbis_decode_filename(filePath.c_str(), &audioChannels, &audioSampleRate, &audioBuffer);
-    checkError();
+    for (const auto& [key, value] : m_cachedSounds) {
+        if (strcmp(key.c_str(), filePath.c_str()) == NULL) {
+            // Have to mutiply by 4 because OpenAL excpects a buffer size that is a multiple of 4
+            alBufferData(m_bufferID, value.format, value.buffer, value.bufferSize * 4, value.sampleRate);
+            checkError();
 
-    if (audioBuffer == nullptr) {
-        std::cerr << "Failed to load audio file: " << filePath;
+            alSourcei(m_sourceID, AL_BUFFER, m_bufferID);
+            checkError();
+
+            return;
+        } 
     }
 
-    if (audioChannels > 1) {
-        audioFormat = AL_FORMAT_STEREO16;
+    SoundData audioData;
+
+    audioData.bufferSize = stb_vorbis_decode_filename(filePath.c_str(), &audioData.channels, &audioData.sampleRate, &audioData.buffer);
+    
+    if (audioData.buffer == nullptr) {
+        std::cerr << "Failed to load audio file: " << filePath;
+        return;
+    }
+
+    m_filePath = filePath;
+
+    if (audioData.channels > 1) {
+        audioData.format = AL_FORMAT_STEREO16;
     } else {
-        audioFormat = AL_FORMAT_MONO16;
+        audioData.format = AL_FORMAT_MONO16;
     }
 
     // Have to mutiply by 4 because OpenAL excpects a buffer size that is a multiple of 4
-    alBufferData(m_bufferID, audioFormat, audioBuffer, audioBufferSize * 4, audioSampleRate);
+    alBufferData(m_bufferID, audioData.format, audioData.buffer, audioData.bufferSize * 4, audioData.sampleRate);
     checkError();
 
     alSourcei(m_sourceID, AL_BUFFER, m_bufferID);
     checkError();
+
+    m_cachedSounds.insert({filePath, audioData});
 }
 
 void Sound::play(bool doesLoop, float gain) {
@@ -89,4 +109,11 @@ void Sound::stop() {
 void Sound::pause() {
     alSourcePause(m_sourceID);
     checkError();
+}
+
+void Sound::destroy() {
+    if (strcmp(m_filePath.c_str(), "") != NULL) {
+        //delete m_cachedSounds[m_filePath].buffer; // stb_vorbis allocats sound data on heap
+        m_cachedSounds.erase(m_filePath);
+    }
 }

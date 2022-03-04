@@ -2,12 +2,12 @@
 
 #include <iostream>
 
-EBO::EBO(std::vector<uint8_t> indices)
+EBO::EBO(uint32_t* indices, size_t lenOfindices)
 {
     glGenBuffers(1, &m_ID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ID);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint8_t) * indices.size(), indices.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, lenOfindices * sizeof(uint32_t), indices, GL_DYNAMIC_DRAW);
 }
 
 uint32_t EBO::getID()

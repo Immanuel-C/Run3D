@@ -1,29 +1,116 @@
 #include "Mesh3D.h"
 
-VAO Mesh3D::m_vao;
 
-Mesh3D::Mesh3D(std::string modelPath, glm::vec3 position, glm::vec3 scale, float rotationDeg, glm::vec3 rotationAxis, Shader shader)
-	: m_position{ position },
-	  m_rotation{ rotationDeg },
-	  m_rotationAxis{ rotationAxis },
-	  m_scale{ scale },
-	  m_shader{ shader }
+void Mesh3D::create(float* vertices, size_t lenOfVertices, uint32_t* indices, size_t lenOfIndices) {
+
+	if (!m_vao.getID()) {
+		m_vao = {};
+	}
+
+	m_vao.bind();
+	m_shader.bind();
+
+	m_vbo = { vertices, m_lenOfVertices };
+	m_ebo = { indices, m_lenOfIndices };
+
+	m_vao.unbind();
+	m_shader.unbind();
+	m_vbo.unbind();
+	m_ebo.unbind();
+	
+	recalculateMatrices();
+}
+
+Mesh3D::Mesh3D(const std::string& modelPath, glm::vec3 position, glm::vec3 scale, float rotationDeg, glm::vec3 rotationAxis, Shader shader, ITexture texture, bool isSkyBox)
+		: m_position{ position },
+		m_rotation{ rotationDeg },
+		m_rotationAxis{ rotationAxis },
+		m_isSkyBox { isSkyBox },
+		m_texture { texture },
+		m_scale{ scale },
+		m_shader{ shader },
+		m_lenOfIndices { 0 },
+		m_doesHaveIndices { false }
 {
-	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(modelPath,
-		aiProcess_Triangulate | aiProcess_FlipUVs);
+	std::vector<float> vertices;
 
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE 
-		|| !scene->mRootNode) {
-		std::cerr << "Failed to load file: " << modelPath << "\nAssimp Error: " << importer.GetErrorString();
+	if (!m_vao.getID()) {
+		m_vao = {};
+	}
+
+	m_vao.bind();
+	m_shader.bind();
+
+
+	Timer timer;
+	timer.start();
+
+	// attrib contains the vertex arrays of the file
+	tinyobj::attrib_t attrib;
+	// shapes contain the info for each separate object in the file
+	std::vector<tinyobj::shape_t> shapes;
+	// materials contain the info about the material of each shape
+	std::vector<tinyobj::material_t> materials;
+
+	// err and warning output from the LoadObj function
+	std::string warn;
+	std::string err;
+
+    //load the OBJ file
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str(), nullptr, true)) {
+		std::cerr << "Failed to load model: " << modelPath;
+	}
+
+	if (!warn.empty()) {
+		std::cerr << "Model Loading Warning: " << warn << '\n';
+	} 
+	
+	if (!err.empty()) {
+		std::cerr << "Model Loading Error: " << err << '\n';
 		return;
 	}
 
-	m_directory = modelPath.substr(0, modelPath.find_last_of('/'));
+	uint16_t fv = 3;
+	for (auto& shape : shapes) {
+		int indexOffset = 0;
+		for (int f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
+			for (int v = 0; v < fv; v++) {
+				// access to vertex
+				tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
 
+				// Vertex positions
+				vertices.push_back(attrib.vertices[3 * idx.vertex_index + 0]);
+				vertices.push_back(attrib.vertices[3 * idx.vertex_index + 1]);
+				vertices.push_back(attrib.vertices[3 * idx.vertex_index + 2]);
 
-	processNode(scene->mRootNode, scene);
+				// Vertex normals
+				vertices.push_back(attrib.normals[3 * idx.normal_index + 0]);
+				vertices.push_back(attrib.normals[3 * idx.normal_index + 1]);
+				vertices.push_back(attrib.normals[3 * idx.normal_index + 2]);
+
+				// Vertex texcoords
+				vertices.push_back(attrib.texcoords[2 * idx.texcoord_index + 0]);
+				vertices.push_back(attrib.texcoords[2 * idx.texcoord_index + 1]);
+			}
+			indexOffset += fv;
+		}
+	}
+
+	timer.end();
+
+	std::cout << "Loading Model: " << modelPath.substr(modelPath.find_last_of('/') + 1) << " Took " << timer.seconds << "s and " << timer.miliseconds << "ms\n";
+
+	m_lenOfVertices = vertices.size();
+
+	m_vbo = { (std::vector<float>)vertices };
+
+	m_vao.unbind();
+	m_shader.unbind();
+	m_vbo.unbind();
+	
+	recalculateMatrices();
 }
+
 
 glm::vec3 Mesh3D::getPosition()
 {
@@ -84,34 +171,22 @@ void Mesh3D::setScale(glm::vec3 scale)
 	recalculateMatrices();
 }
 
+void Mesh3D::rotate(float rotation, glm::vec3 rotationAxis) {
+	m_rotation += rotation;
+	m_rotationAxis = rotationAxis;
+	recalculateMatrices();
+}
+
 
 void Mesh3D::destroy()
 {
 	m_shader.destroy();
 	m_vbo.destroy();
 	m_ebo.destroy();
+	m_vao.destroy();
 }
 
-void Mesh3D::createMesh(std::vector<_Vertex> vertices, std::vector<uint8_t> indices)
-{
-	std::vector<float> convertedVertices(vertices.size());
 
-	// Convert vertices into a way that the vbo class can understand
-	for (_Vertex& vertex : vertices) {
-		convertedVertices.push_back(vertex.position.x);
-		convertedVertices.push_back(vertex.position.y);
-		convertedVertices.push_back(vertex.position.z);
-		
-		convertedVertices.push_back(1.0f);
-		convertedVertices.push_back(1.0f);
-		convertedVertices.push_back(1.0f);
-		
-		convertedVertices.push_back(vertex.texCoords.x);
-		convertedVertices.push_back(vertex.texCoords.y);
-	}
-
-	m_meshes.emplace_back(new Mesh3D(convertedVertices, indices, m_position, m_scale, m_rotation, m_rotationAxis, m_shader));
-}
 void Mesh3D::recalculateMatrices()
 {
 	if (m_rotationAxis != glm::vec3{ 0.0f, 0.0f, 0.0f }) {
@@ -123,71 +198,4 @@ void Mesh3D::recalculateMatrices()
 		m_transformMat = glm::scale(glm::mat4{ 1.0f }, m_scale) *
 			glm::translate(glm::mat4{ 1.0f }, m_position);
 	}
-}
-
-void Mesh3D::processNode(aiNode* node, const aiScene* scene)
-{
-	// process all the node's meshes (if any) 
-	for (int i = 0; i < node->mNumMeshes; i++) {
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		processMesh(mesh, scene);
-	}
-	// then do the same for each of its children
-	for (int i = 0; i < node->mNumChildren; i++)
-	{
-		processNode(node->mChildren[i], scene);
-	}
-}
-
-void Mesh3D::processMesh(aiMesh* mesh, const aiScene* scene)
-{
-	std::vector<_Vertex> vertices;
-	std::vector<uint8_t> indices;
-
-	// Process vertices
-	for (int i = 0; i < mesh->mNumVertices; i++) {
-		_Vertex vertex;
-
-		glm::vec3 vector;
-		vector.x = mesh->mVertices[i].x;
-		vector.y = mesh->mVertices[i].y;
-		vector.z = mesh->mVertices[i].z;
-		/*
-		vector.x = mesh->mNormals[i].x;
-		vector.y = mesh->mNormals[i].y;
-		vector.z = mesh->mNormals[i].z;
-		vertex.Normal = vector;
-		*/
-
-		if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-		{
-			glm::vec2 vec;
-			vec.x = mesh->mTextureCoords[0][i].x;
-			vec.y = mesh->mTextureCoords[0][i].y;
-			vertex.texCoords = vec;
-		}
-		else
-			vertex.texCoords = glm::vec2(0.0f, 0.0f);
-
-		vertex.position = vector;
-
-		vertices.push_back(vertex);
-	}
-
-	// process indices
-	for (int i = 0; i < mesh->mNumFaces; i++) {
-		aiFace face = mesh->mFaces[i];
-		for (int j = 0; j < face.mNumIndices; j++) {
-			indices.push_back(face.mIndices[j]);
-		}
-	}
-
-
-	// process textures
-	if (mesh->mMaterialIndex >= 0) {
-
-	}
-
-
-	createMesh(vertices, indices);
 }

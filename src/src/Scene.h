@@ -2,6 +2,8 @@
 
 #include "Camera.h"
 #include "Mesh3D.h"
+#include "Light.h"
+//#include "Model.h"
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
@@ -25,6 +27,10 @@ public:
 	/// an exception will be thrown!
 	inline void addMesh(Mesh3D* mesh) { m_heapMeshes.push_back(mesh); }
 
+	inline void addLight(Light& light) { m_lights.push_back(&light); }
+
+	//inline void addModel(Model& model) { m_models.push_back(&model); }
+
 	void draw();
 
 	void destroy();
@@ -32,5 +38,7 @@ private:
 	Camera3D& m_camera;
 	std::vector<Mesh3D*> m_meshes;
 	std::vector<Mesh3D*> m_heapMeshes;
+	std::vector<Light*> m_lights;
+	//std::vector<Model*> m_models;
 };
 

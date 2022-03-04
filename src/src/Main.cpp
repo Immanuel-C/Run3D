@@ -19,13 +19,13 @@
 #include "R3DTime.h"
 #include "Texture.h"
 #include "Sound.h"
-
+#include "Light.h"
 
 int main()
 {
     Window* window = Window::get();
     window->setSize(1280, 720);
-    window->setTitle("Learning OpenGL 3D");
+    window->setTitle("Run3D");
     window->useVsync(false);
     window->setColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -45,12 +45,12 @@ int main()
 
     std::array<std::string, 6> faces = 
     {
-        "Assets/Textures/SkyBoxes/RedSpace/right.png",
-        "Assets/Textures/SkyBoxes/RedSpace/left.png",
-        "Assets/Textures/SkyBoxes/RedSpace/top.png",
-        "Assets/Textures/SkyBoxes/RedSpace/bottom.png",
-        "Assets/Textures/SkyBoxes/RedSpace/front.png",
-        "Assets/Textures/SkyBoxes/RedSpace/back.png"
+        "Assets/Textures/SkyBoxes/Mountains/right.jpg",
+        "Assets/Textures/SkyBoxes/Mountains/left.jpg",
+        "Assets/Textures/SkyBoxes/Mountains/top.jpg",
+        "Assets/Textures/SkyBoxes/Mountains/bottom.jpg",
+        "Assets/Textures/SkyBoxes/Mountains/front.jpg",
+        "Assets/Textures/SkyBoxes/Mountains/back.jpg"
     };
 
     TextureEffects skyBoxEffects;
@@ -60,7 +60,8 @@ int main()
 
     CubeMap cubeMap{faces, skyBoxEffects};
 
-    std::array<float, 64> vertices = {
+
+    std::array<float, 65> oldVerticesCube = {
         // front
         -0.5, -0.5,  0.5,   1.0, 0.0, 0.0,  0.0f, 0.0f,   // FBL
          0.5, -0.5,  0.5,   0.0, 1.0, 0.0,  1.0f, 0.0f,   // FBR
@@ -70,10 +71,84 @@ int main()
         -0.5, -0.5, -0.5,   1.0, 0.0, 0.0,  0.0f, 0.0f,   // BBL
          0.5, -0.5, -0.5,   0.0, 1.0, 0.0,  1.0f, 0.0f,   // BBR
          0.5,  0.5, -0.5,   0.0, 0.0, 1.0,  1.0f, 1.0f,   // BTR
-        -0.5,  0.5, -0.5,   1.0, 1.0, 1.0,  0.0f, 1.0f    // BTL
+        -0.5,  0.5, -0.5,   1.0, 1.0, 1.0,  0.0f, 1.0f,   // BTL
     };
 
-    std::array<uint8_t, 36> indices = {
+
+    std::array<float, 288> verticesCube = {
+         // BACK
+
+         // Positions      |         Normals           |       Tex Coords
+        -0.5f, -0.5f, -0.5f,         0.0f,  0.0f, -1.0f,       0.0f, 0.0f, // 0
+         0.5f, -0.5f, -0.5f,         0.0f,  0.0f, -1.0f,       1.0f, 0.0f, // 1
+         0.5f,  0.5f, -0.5f,         0.0f,  0.0f, -1.0f,       1.0f, 1.0f, // 2
+
+         0.5f,  0.5f, -0.5f,         0.0f,  0.0f, -1.0f,       1.0f, 1.0f, // 3
+        -0.5f,  0.5f, -0.5f,         0.0f,  0.0f, -1.0f,       0.0f, 1.0f, // 4
+        -0.5f, -0.5f, -0.5f,         0.0f,  0.0f, -1.0f,       0.0f, 0.0f, // 5
+
+         // FRONT
+        -0.5f, -0.5f,  0.5f,         0.0f,  0.0f,  1.0f,       0.0f, 0.0f, // 6
+         0.5f, -0.5f,  0.5f,         0.0f,  0.0f,  1.0f,       1.0f, 0.0f, // 7
+         0.5f,  0.5f,  0.5f,         0.0f,  0.0f,  1.0f,       1.0f, 1.0f, // 8
+
+         0.5f,  0.5f,  0.5f,         0.0f,  0.0f,  1.0f,       1.0f, 1.0f, // 9
+        -0.5f,  0.5f,  0.5f,         0.0f,  0.0f,  1.0f,       0.0f, 1.0f, // 10
+        -0.5f, -0.5f,  0.5f,         0.0f,  0.0f,  1.0f,       0.0f, 0.0f, // 11
+
+         // LEFT
+        -0.5f,  0.5f,  0.5f,        -1.0f,  0.0f,  0.0f,       1.0f, 1.0f, // 12
+        -0.5f,  0.5f, -0.5f,        -1.0f,  0.0f,  0.0f,       1.0f, 0.0f, // 13
+        -0.5f, -0.5f, -0.5f,        -1.0f,  0.0f,  0.0f,       0.0f, 0.0f, // 14
+
+        -0.5f, -0.5f, -0.5f,        -1.0f,  0.0f,  0.0f,       0.0f, 0.0f, // 15
+        -0.5f, -0.5f,  0.5f,        -1.0f,  0.0f,  0.0f,       0.0f, 1.0f, // 16
+        -0.5f,  0.5f,  0.5f,        -1.0f,  0.0f,  0.0f,       1.0f, 1.0f, // 17
+
+         // RIGHT
+         0.5f,  0.5f,  0.5f,         1.0f,  0.0f,  0.0f,       1.0f, 1.0f, // 18
+         0.5f,  0.5f, -0.5f,         1.0f,  0.0f,  0.0f,       1.0f, 0.0f, // 19
+         0.5f, -0.5f, -0.5f,         1.0f,  0.0f,  0.0f,       0.0f, 0.0f, // 20
+
+         0.5f, -0.5f, -0.5f,         1.0f,  0.0f,  0.0f,       0.0f, 0.0f, // 21
+         0.5f, -0.5f,  0.5f,         1.0f,  0.0f,  0.0f,       0.0f, 1.0f, // 22
+         0.5f,  0.5f,  0.5f,         1.0f,  0.0f,  0.0f,       1.0f, 1.0f, // 23
+
+         // BOTTOM
+        -0.5f, -0.5f, -0.5f,         0.0f, -1.0f,  0.0f,       0.0f, 0.0f, // 24
+         0.5f, -0.5f, -0.5f,         0.0f, -1.0f,  0.0f,       1.0f, 0.0f, // 25
+         0.5f, -0.5f,  0.5f,         0.0f, -1.0f,  0.0f,       1.0f, 1.0f, // 26
+
+         0.5f, -0.5f,  0.5f,         0.0f, -1.0f,  0.0f,       1.0f, 1.0f, // 27
+        -0.5f, -0.5f,  0.5f,         0.0f, -1.0f,  0.0f,       0.0f, 1.0f, // 28
+        -0.5f, -0.5f, -0.5f,         0.0f, -1.0f,  0.0f,       0.0f, 0.0f, // 29
+
+         // TOP
+        -0.5f,  0.5f, -0.5f,         0.0f,  1.0f,  0.0f,       0.0f, 0.0f, // 30
+         0.5f,  0.5f, -0.5f,         0.0f,  1.0f,  0.0f,       1.0f, 0.0f, // 31
+         0.5f,  0.5f,  0.5f,         0.0f,  1.0f,  0.0f,       1.0f, 1.0f, // 32
+
+         0.5f,  0.5f,  0.5f,         0.0f,  1.0f,  0.0f,       1.0f, 1.0f, // 33
+        -0.5f,  0.5f,  0.5f,         0.0f,  1.0f,  0.0f,       0.0f, 1.0f, // 34
+        -0.5f,  0.5f, -0.5f,         0.0f,  1.0f,  0.0f,       0.0f, 0.0f, // 35
+    };
+
+    std::array<uint32_t, 36> indicesCube = {
+        0,  1,  2,
+        3,  4,  5,
+        6,  7,  8,
+        9,  10, 11,
+        12, 13, 14,
+        15, 16, 17,
+        18, 19, 20,
+        21, 22, 23,
+        24, 25, 26,
+        27, 28, 29,
+        30, 31, 32,
+        33, 34, 35
+    };
+
+    std::array<uint32_t, 36> oldIndicesCube = {
         // front
         0, 1, 2,
         2, 3, 0,
@@ -97,27 +172,47 @@ int main()
     Camera3D camera{90.0f, (float)window->getWidth() / (float)window->getHeight(), 0.1f, 100000.0f};
     camera.setPosition({ 0.0f, 0.0f, -3.0f });
 
-    Scene scene{ camera };
+    Scene scene{camera};
 
-    Mesh3D mesh0{ vertices, indices, {5.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, 0.0f, {}, shader };
-    Mesh3D mesh1{ vertices, indices, {-5.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 0.0f, {}, shader };
-    Mesh3D texturedMesh{ vertices, indices, {}, {1.0f, 1.0f, 1.0f}, 0.0f, {}, basicTextureShader, basicTexture };
-    //Mesh3D mesh2{ "Assets/Models/EMP_Handgun.fbx", {}, {10.0f, 10.0f, 10.0f,}, 0.0f, {}, shader };
 
-    Mesh3D skybox{ vertices, indices, {}, {50000.0f, 50000.0f, 50000.0f}, 0.0f, {}, skyBoxShader, cubeMap, true };
+
+    Mesh3D mesh0{ verticesCube, indicesCube, {5.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, 0.0f, {}, shader };
+    Mesh3D mesh1{ verticesCube, indicesCube, {-5.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 0.0f, {}, shader };
+    Mesh3D texturedMesh{ verticesCube, indicesCube, {-5.0f, -5.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, 0.0f, {}, basicTextureShader, basicTexture };
+    Mesh3D lightMesh{ verticesCube, indicesCube, {0.0f, 5.0f, -10.0f}, {0.3f, 0.3f, 0.3f}, 0.0f, {}, shader };
+
+    Light light{};
+    light.position = lightMesh.getPosition();
+    light.colour = {1.0f, 1.0f, 1.0f};
+    light.strength = 2.0f;
+
+    Mesh3D skybox{ verticesCube, indicesCube, {}, {50000.0f, 50000.0f, 50000.0f}, 0.0f, {}, skyBoxShader, cubeMap, true };
+
+
+    Mesh3D deccerCubes{"Assets/Models/deccer_cubes.obj", {0.0f, -16.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, 0.0f, {}, shader};
+    Mesh3D tree{"Assets/Models/tree.obj", {0.0f, 7.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, 0.0f, {}, shader};
+    //Mesh3D backPack{"Assets/Models/backPack.obj", {0.0f, 0.0f, 0.0f}, {0.05f, 0.05f, 0.05f}, -90.0f, {1.0f, 0.0f, 0.0f}, shader};
+    Mesh3D iphone{"Assets/Models/iphone.obj", {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, -90.0f, {1.0f, 0.0f, 0.0f}, shader};
+
 
     scene.addMesh(mesh0);
     scene.addMesh(mesh1);
-    scene.addMesh(texturedMesh);
-    //scene.addMesh(&mesh2);
-
+//    scene.addMesh(texturedMesh);
+    scene.addMesh(tree);
+    scene.addMesh(deccerCubes);
+    //scene.addMesh(backPack);
+    scene.addMesh(iphone);
     scene.addMesh(skybox);
+    scene.addMesh(lightMesh);
 
+    scene.addLight(light);
+    
     double highestFPS = 0;
-    uint32_t FPScounter = 0;
+    uint16_t FPScounter = 0;
 
-    float constexpr SPEED = 10.f;
-    float constexpr ROTATION_SPEED = 5.f;
+
+    float constexpr SPEED = 5.0f;
+    float constexpr ROTATION_SPEED = 5.0f;
     float constexpr GRAVITY_SPEED = -0.005f;
 
     float mouseLastX = Input::getMousePos().x;
@@ -130,6 +225,7 @@ int main()
 
     Sound sound{"Assets/Audio/getout.ogg"};
     sound.play(false);
+
 
     while (!window->shouldClose()) {
         window->clear();
@@ -145,7 +241,7 @@ int main()
         }
 
         if (dt >= 1.0 / 1000.0) {
-            std::string newWindowTitle = "Learning OpenGL 3D - FPS: ";
+            std::string newWindowTitle = "Run3D - FPS: ";
             newWindowTitle.append(std::to_string(FPS).c_str());
             newWindowTitle.append(" - Highest FPS: " + std::to_string(highestFPS));
             window->setTitle(newWindowTitle);
@@ -207,6 +303,8 @@ int main()
             direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
             camera.setFront(glm::normalize(direction));
         }
+
+        //backPack.rotate(0.5f * dt, {0.0f, 1.0f, 1.0f});
 
         scene.draw();
 

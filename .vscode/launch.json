@@ -5,18 +5,30 @@
   "version": "2.0.0",
   "configurations": [
     {
-      "name": "clang++",
+      "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/src/Run3D.exe",
       "args": [],
-      "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/src",
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}/src/",
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
       "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
+      "setupCommands": [
+          {
+              "description": "Enable pretty-printing for gdb",
+              "text": "-enable-pretty-printing",
+              "ignoreFailures": true
+          },
+          {
+              "description":  "Set Disassembly Flavor to Intel",
+              "text": "-gdb-set disassembly-flavor intel",
+              "ignoreFailures": true
+          }
+      ],
       "preLaunchTask": "C/C++: clang++.exe build active file"
-    }
+    },
   ]
 }
